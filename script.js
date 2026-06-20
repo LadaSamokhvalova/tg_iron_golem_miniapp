@@ -150,15 +150,15 @@ function initCaptcha() {
     captchaStatus.className = 'captcha-status';
     checkCaptchaBtn.disabled = true;
     
-    // // Скрываем строку через 3 секунды
-    // setTimeout(() => {
-    //     captchaString.style.opacity = '0.3';
-    //     captchaString.style.transition = 'opacity 0.5s ease';
-    //     captchaString.innerHTML = '❓ Запомнили?';
-    //     setTimeout(() => {
-    //         captchaString.style.opacity = '1';
-    //     }, 300);
-    // }, 3000);
+    // Скрываем строку через 3 секунды
+    setTimeout(() => {
+        captchaString.style.opacity = '3';
+        captchaString.style.transition = 'opacity 0.5s ease';
+        captchaString.innerHTML = '❓ Запомнили?';
+        setTimeout(() => {
+            captchaString.style.opacity = '1';
+        }, 300);
+    }, 3000);
 }
 
 function handleEmojiClick(btn, emoji) {
