@@ -502,6 +502,7 @@
         
         // ===== ИНИЦИАЛИЗАЦИЯ =====
         const tg = window.Telegram.WebApp;
+        console.log('📱 Telegram WebApp initialized:', tg);
         tg.expand();
 
         const user = tg.initDataUnsafe?.user;
@@ -949,17 +950,17 @@
         renderRules();
         showPage('rulesPage');
 
-        // Настройка главной кнопки
-        if (tg.MainButton) {
-            tg.MainButton.setText('📋 Правила');
-            tg.MainButton.show();
+        // // Настройка главной кнопки
+        // if (tg.MainButton) {
+        //     tg.MainButton.setText('📋 Правила');
+        //     tg.MainButton.show();
             
-            tg.MainButton.onClick(() => {
-                if (rulesList) {
-                    rulesList.scrollTop = 0;
-                }
-            });
-        }
+        //     tg.MainButton.onClick(() => {
+        //         if (rulesList) {
+        //             rulesList.scrollTop = 0;
+        //         }
+        //     });
+        // }
 
         // Обработка темы
         tg.onEvent('themeChanged', () => {
