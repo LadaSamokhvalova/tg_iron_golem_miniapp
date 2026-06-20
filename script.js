@@ -7,13 +7,12 @@ const user = tg.initDataUnsafe?.user;
 // ===== ПРАВИЛА =====
 const rules = [
     { emoji: '🤝', text: 'Будьте вежливы и уважайте друг друга' },
-    { emoji: '🚫', text: 'Запрещен спам, реклама и флуд' },
+    { emoji: '🚫', text: 'Запрещен спам, ссылки, реклама, флуд, бессвязные выкрики' },
     { emoji: '🔞', text: 'Запрещен контент 18+ и оскорбления' },
     { emoji: '📢', text: 'Обсуждайте только темы, связанные с чатом' },
-    { emoji: '🤖', text: 'Не используйте ботов для накрутки' },
     { emoji: '👤', text: 'Один аккаунт — один участник' },
-    { emoji: '📸', text: 'Не публикуйте личные данные других' },
-    { emoji: '💬', text: 'Используйте @username для упоминаний' },
+    { emoji: '📸', text: 'Не публикуйте личные данные других людей' },
+    { emoji: '💬', text: 'Приветствуются комментарии с вашим мнением, опытом или впечатлениями. Мы рады конструктивным дисскусиям и хорошей орфографии :)' },
 ];
 
 // ===== ГЕНЕРАЦИЯ КАПЧИ =====
@@ -38,6 +37,7 @@ let isCaptchaCompleted = false;
 // ===== DOM ЭЛЕМЕНТЫ =====
 const rulesPage = document.getElementById('rulesPage');
 const captchaPage = document.getElementById('captchaPage');
+const mainPage = document.getElementById('mainPage');
 
 const rulesList = document.getElementById('rulesList');
 const agreeBtn = document.getElementById('agreeBtn');
@@ -150,15 +150,15 @@ function initCaptcha() {
     captchaStatus.className = 'captcha-status';
     checkCaptchaBtn.disabled = true;
     
-    // Скрываем строку через 3 секунды
-    setTimeout(() => {
-        captchaString.style.opacity = '0.3';
-        captchaString.style.transition = 'opacity 0.5s ease';
-        captchaString.innerHTML = '❓ Запомнили?';
-        setTimeout(() => {
-            captchaString.style.opacity = '1';
-        }, 300);
-    }, 3000);
+    // // Скрываем строку через 3 секунды
+    // setTimeout(() => {
+    //     captchaString.style.opacity = '0.3';
+    //     captchaString.style.transition = 'opacity 0.5s ease';
+    //     captchaString.innerHTML = '❓ Запомнили?';
+    //     setTimeout(() => {
+    //         captchaString.style.opacity = '1';
+    //     }, 300);
+    // }, 3000);
 }
 
 function handleEmojiClick(btn, emoji) {
