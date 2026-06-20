@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Верификация</title>
+    
+    <!-- Подключаем Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- СТРАНИЦА 2: КАПЧА -->
+        <div class="page" id="captchaPage">
+            <div class="container">
+                <div class="header">
+                    <div class="icon-big">🧩</div>
+                    <h1>Проверка</h1>
+                    <p class="subtitle">Нажмите эмодзи в правильном порядке</p>
+                </div>
+                
+                <div class="captcha-section">
+                    <div class="captcha-string" id="captchaString">
+                        <!-- Эмодзи для запоминания -->
+                    </div>
+                    
+                    <div class="captcha-input" id="captchaInput">
+                        <!-- Выбранные эмодзи будут появляться здесь -->
+                    </div>
+                    
+                    <div class="captcha-options" id="captchaOptions">
+                        <!-- Кнопки с эмодзи -->
+                    </div>
+                    
+                    <div class="captcha-status" id="captchaStatus">
+                        👆 Выберите эмодзи в том же порядке
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="checkCaptchaBtn" disabled>
+                    ✅ Проверить
+                </button>
+                <button class="btn btn-secondary" id="resetCaptchaBtn">
+                    🔄 Начать заново
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

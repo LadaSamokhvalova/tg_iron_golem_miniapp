@@ -24,82 +24,12 @@
                 <div class="rules-list" id="rulesList">
                     <!-- Правила будут добавлены через JS -->
                 </div>
-                
-                <button class="btn btn-primary btn-bottom" id="agreeBtn" disabled>
-                    📖 Я прочитал(а), я согласен(на)
-                </button>
-                <div class="scroll-hint" id="scrollHint">⬇️ Прокрутите до конца ⬇️</div>
-            </div>
-        </div>
-
-        <!-- СТРАНИЦА 2: КАПЧА -->
-        <div class="page" id="captchaPage">
-            <div class="container">
-                <div class="header">
-                    <div class="icon-big">🧩</div>
-                    <h1>Проверка</h1>
-                    <p class="subtitle">Нажмите эмодзи в правильном порядке</p>
-                </div>
-                
-                <div class="captcha-section">
-                    <div class="captcha-string" id="captchaString">
-                        <!-- Эмодзи для запоминания -->
-                    </div>
-                    
-                    <div class="captcha-input" id="captchaInput">
-                        <!-- Выбранные эмодзи будут появляться здесь -->
-                    </div>
-                    
-                    <div class="captcha-options" id="captchaOptions">
-                        <!-- Кнопки с эмодзи -->
-                    </div>
-                    
-                    <div class="captcha-status" id="captchaStatus">
-                        👆 Выберите эмодзи в том же порядке
-                    </div>
-                </div>
-                
-                <button class="btn btn-primary" id="checkCaptchaBtn" disabled>
-                    ✅ Проверить
-                </button>
-                <button class="btn btn-secondary" id="resetCaptchaBtn">
-                    🔄 Начать заново
-                </button>
-            </div>
-        </div>
-
-        <!-- СТРАНИЦА 3: ОСНОВНОЙ КОНТЕНТ -->
-        <div class="page" id="mainPage">
-            <div class="container">
-                <div class="header">
-                    <div class="icon-big">🎉</div>
-                    <h1>Добро пожаловать!</h1>
-                    <p class="subtitle">Вы успешно прошли верификацию</p>
-                </div>
-                
-                <div class="user-info">
-                    <div class="avatar" id="avatar"></div>
-                    <div class="user-name" id="userName">Загрузка...</div>
-                    <div class="user-status" id="userStatus">✅ Верифицирован</div>
-                </div>
-                
-                <div class="welcome-card">
-                    <p id="welcomeText">
-                        Рады видеть тебя в нашем чате! 🎉
-                    </p>
-                    <button class="btn btn-primary" id="actionBtn">
-                        Нажми меня!
+                <a href="captcha.html">
+                    <button class="btn btn-primary btn-bottom" id="agreeBtn" disabled>
+                        📖 Я прочитал(а), я согласен(на)
                     </button>
-                </div>
-                
-                <div class="counter-box">
-                    <p>Количество нажатий:</p>
-                    <span id="counter">0</span>
-                </div>
-                
-                <button class="btn btn-secondary" id="logoutBtn">
-                    🚪 Выйти
-                </button>
+                </a>
+                <div class="scroll-hint" id="scrollHint">⬇️ Прокрутите до конца ⬇️</div>
             </div>
         </div>
     </div>

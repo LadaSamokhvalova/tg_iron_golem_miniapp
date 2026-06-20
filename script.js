@@ -38,7 +38,6 @@ let isCaptchaCompleted = false;
 // ===== DOM ЭЛЕМЕНТЫ =====
 const rulesPage = document.getElementById('rulesPage');
 const captchaPage = document.getElementById('captchaPage');
-const mainPage = document.getElementById('mainPage');
 
 const rulesList = document.getElementById('rulesList');
 const agreeBtn = document.getElementById('agreeBtn');
