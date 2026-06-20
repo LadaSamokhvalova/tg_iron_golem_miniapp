@@ -682,7 +682,7 @@
             
             setTimeout(() => {
                 if (captchaString) {
-                    captchaString.style.opacity = '3';
+                    captchaString.style.opacity = '5';
                     captchaString.innerHTML = '❓ Запомнили? Выберите в том же порядке';
                     setTimeout(() => {
                         if (captchaString) {
@@ -751,7 +751,30 @@
                     user: user?.id,
                     username: user?.username
                 }));
+
+                // ============================================================
+                // ⭐ ТОЛЬКО ЗДЕСЬ ОТПРАВЛЯЕМ ДАННЫЕ В БОТА
+                // ============================================================
+                isVerified = true;
                 
+                // Отправляем данные в бот только после успешной капчи
+                const dataToSend = {
+                    action: 'user_verified',
+                    user_id: user?.id,
+                    username: user?.username,
+                    first_name: user?.first_name,
+                    last_name: user?.last_name,
+                    is_bot: user?.is_bot || false,
+                    verified_at: new Date().toISOString()
+                };
+                
+                console.log('📤 Отправка данных в бот:', dataToSend);
+                tg.sendData(JSON.stringify(dataToSend));
+                
+                
+
+
+
                 setTimeout(() => {
                     showPage('mainPage');
                     showMainPage();
