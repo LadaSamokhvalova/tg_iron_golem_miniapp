@@ -288,7 +288,7 @@ if (resetCaptchaBtn) {
 }
 
 // ===== ЗАПУСК =====
-// Ждем полной загрузки DOM
+// Ждем полной загрузки DOM fdsfdf
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         console.log('📄 DOM загружен, запускаем капчу');
