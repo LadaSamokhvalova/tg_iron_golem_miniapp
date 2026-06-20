@@ -502,15 +502,19 @@
         
         // ===== ИНИЦИАЛИЗАЦИЯ =====
         const tg = window.Telegram?.WebApp;
-        if (tg) {
+        
+        // Проверяем, что мы внутри Telegram
+        if (!tg) {
+            console.error('❌ Telegram WebApp не найден! Убедитесь, что вы открываете это внутри Telegram.');
+            // Показываем сообщение пользователю
+            document.body.innerHTML = '<div style="padding:20px;text-align:center;color:red;">❌ Это приложение работает только внутри Telegram!</div>';
+            throw new Error('Telegram WebApp not found');
+        }
+            
+        // Расширяем и готовим приложение
         tg.expand();
         tg.ready();
         console.log('📱 Telegram WebApp initialized:', tg);
-        }
-        else {
-            console.error('❌ Telegram WebApp не найден! Убедитесь, что вы открываете это внутри Telegram.');
-        }
-
 
         const user = tg.initDataUnsafe?.user;
 
@@ -631,6 +635,24 @@
             }
         }
 
+
+        // ===== ФУНКЦИЯ ОТПРАВКИ ДАННЫХ В БОТА =====
+        function sendDataToBot(data) {
+            if (!tg) {
+                console.error('❌ Нет соединения с Telegram!');
+                return false;
+            }
+            
+            try {
+                const jsonData = JSON.stringify(data);
+                console.log('📤 Отправка в бота:', jsonData);
+                tg.sendData(jsonData);
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка отправки:', error);
+                return false;
+            }
+        }
         // ===== ИНИЦИАЛИЗАЦИЯ КАПЧИ =====
         function initCaptcha() {
             captchaSequence = generateCaptcha();
@@ -743,32 +765,12 @@
                         btn.classList.add('correct');
                     }
                 });
-                
-                tg.sendData(JSON.stringify({
-                    action: 'captcha_passed',
-                    user: user?.id,
-                    username: user?.username
-                }));
 
                 // ============================================================
                 // ⭐ ТОЛЬКО ЗДЕСЬ ОТПРАВЛЯЕМ ДАННЫЕ В БОТА
                 // ============================================================
                 isVerified = true;
-                
-                // Отправляем данные в бот только после успешной капчи
-                const dataToSend = {
-                    action: 'user_verified',
-                    user_id: user?.id,
-                    username: user?.username,
-                    first_name: user?.first_name,
-                    last_name: user?.last_name,
-                    is_bot: user?.is_bot || false,
-                    verified_at: new Date().toISOString()
-                };
-                
-                console.log('📤 Отправка данных в ботааа:', dataToSend);
-                // В Web App (клиентская сторона)
-                
+
                 
                 setTimeout(() => {
                     showPage('mainPage');
@@ -891,46 +893,44 @@
             resetCaptchaBtn.addEventListener('click', resetCaptcha);
         }
 
-        // 4. Основная кнопка
-        if (actionBtn) {
-            actionBtn.addEventListener('click', () => {
-                counter++;
-                if (counterEl) {
-                    counterEl.textContent = counter;
-                }
-                
-                if (tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('light');
-                }
-                
-                if (counter % 5 === 0) {
-                    tg.showAlert(`🎉 Ты нажал ${counter} раз!`);
-                }
-            });
-        }
-
         // 5. Выход
+        // if (logoutBtn) {
+        //     logoutBtn.addEventListener('click', () => {
+        //         if (confirm('Вы уверены, что хотите выйти?')) {
+        //             if (counterEl) {
+        //                 counterEl.textContent = '0';
+        //             }
+        //             if (agreeBtn) {
+        //                 agreeBtn.disabled = true;
+        //             }
+        //             if (scrollHint) {
+        //                 scrollHint.style.display = 'block';
+        //             }
+        //             if (agreeBtn) {
+        //                 agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
+        //             }
+        //             console.log('📤 Отправка данных о выходе в бота:', { user: user?.id, username: user?.username });
+        //             tg.sendData(JSON.stringify({
+        //                 action: 'user_logged_out',
+        //                 user: user?.id,
+        //                 username: user?.username
+        //             }));
+        //             tg.close();
+        //         }
+        //     });
+        // }
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 if (confirm('Вы уверены, что хотите выйти?')) {
-                    if (counterEl) {
-                        counterEl.textContent = '0';
-                    }
-                    if (agreeBtn) {
-                        agreeBtn.disabled = true;
-                    }
-                    if (scrollHint) {
-                        scrollHint.style.display = 'block';
-                    }
-                    if (agreeBtn) {
-                        agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
-                    }
-                    console.log('📤 Отправка данных о выходе в бота:', { user: user?.id, username: user?.username });
-                    tg.sendData(JSON.stringify({
+                    // Отправляем данные о выходе
+                    sendDataToBot({
                         action: 'user_logged_out',
-                        user: user?.id,
-                        username: user?.username
-                    }));
+                        user_id: user?.id,
+                        username: user?.username,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Закрываем приложение
                     tg.close();
                 }
             });
