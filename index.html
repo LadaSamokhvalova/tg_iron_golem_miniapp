@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Мой Миниап</title>
+    
+    <!-- Подключаем Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Подключаем стили -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="header">
+            <h1>👋 Привет!</h1>
+        </div>
+        
+        <div class="content">
+            <div class="user-info">
+                <div class="avatar" id="avatar">
+                    <!-- Будет динамически заполняться -->
+                </div>
+                <div class="user-name" id="userName">
+                    Загрузка...
+                </div>
+                <div class="user-status" id="userStatus">
+                    Добро пожаловать!
+                </div>
+            </div>
+            
+            <div class="greeting-card">
+                <p id="greetingText">
+                    Рады видеть тебя в нашем мини-приложении! 🎉
+                </p>
+                <button class="btn btn-primary" id="actionBtn">
+                    Нажми меня!
+                </button>
+            </div>
+            
+            <div class="counter-box">
+                <p>Количество нажатий:</p>
+                <span id="counter">0</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Сделано с ❤️ для Telegram</p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
