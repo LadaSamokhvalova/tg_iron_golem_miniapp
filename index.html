@@ -501,9 +501,16 @@
         // ============================================================
         
         // ===== ИНИЦИАЛИЗАЦИЯ =====
-        const tg = window.Telegram.WebApp;
-        console.log('📱 Telegram WebApp initialized:', tg);
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
         tg.expand();
+        tg.ready();
+        console.log('📱 Telegram WebApp initialized:', tg);
+        }
+        else {
+            console.error('❌ Telegram WebApp не найден! Убедитесь, что вы открываете это внутри Telegram.');
+        }
+
 
         const user = tg.initDataUnsafe?.user;
 
@@ -919,12 +926,12 @@
                         agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
                     }
                     console.log('📤 Отправка данных о выходе в бота:', { user: user?.id, username: user?.username });
-                    Telegram.WebApp.sendData(JSON.stringify({
+                    tg.sendData(JSON.stringify({
                         action: 'user_logged_out',
                         user: user?.id,
                         username: user?.username
                     }));
-                    Telegram.WebApp.close();
+                    tg.close();
                 }
             });
         }
