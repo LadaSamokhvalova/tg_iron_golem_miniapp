@@ -6,7 +6,6 @@ const user = tg.initDataUnsafe?.user;
 
 // Проверяем, принял ли пользователь правила
 if (localStorage.getItem('rulesAccepted') !== 'true') {
-    // Если нет - отправляем обратно
     window.location.href = 'index.html';
 }
 
@@ -29,7 +28,7 @@ let captchaSequence = [];
 let userSelection = [];
 let isCaptchaCompleted = false;
 
-// ===== DOM ЭЛЕМЕНТЫ =====
+// ===== DOM ЭЛЕМЕНТЫ (с проверкой) =====
 const captchaString = document.getElementById('captchaString');
 const captchaInput = document.getElementById('captchaInput');
 const captchaOptions = document.getElementById('captchaOptions');
@@ -37,22 +36,45 @@ const captchaStatus = document.getElementById('captchaStatus');
 const checkCaptchaBtn = document.getElementById('checkCaptchaBtn');
 const resetCaptchaBtn = document.getElementById('resetCaptchaBtn');
 
+// Проверяем наличие элементов
+console.log('🔍 Проверка элементов капчи:');
+console.log('captchaString:', captchaString);
+console.log('captchaInput:', captchaInput);
+console.log('captchaOptions:', captchaOptions);
+console.log('captchaStatus:', captchaStatus);
+console.log('checkCaptchaBtn:', checkCaptchaBtn);
+console.log('resetCaptchaBtn:', resetCaptchaBtn);
+
 // ===== ИНИЦИАЛИЗАЦИЯ КАПЧИ =====
 function initCaptcha() {
+    console.log('🚀 Запуск initCaptcha()');
+    
+    // Генерируем последовательность
     captchaSequence = generateCaptcha();
     userSelection = [];
     isCaptchaCompleted = false;
     
+    console.log('📝 Последовательность капчи:', captchaSequence);
+    
+    // 1. Показываем строку с эмодзи
     if (captchaString) {
         captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
         captchaString.style.opacity = '1';
+        console.log('✅ Строка капчи отображена');
+    } else {
+        console.error('❌ captchaString не найден!');
     }
     
+    // 2. Очищаем поле ввода
     if (captchaInput) {
         captchaInput.innerHTML = '';
         captchaInput.classList.remove('filled');
+        console.log('✅ Поле ввода очищено');
+    } else {
+        console.error('❌ captchaInput не найден!');
     }
     
+    // 3. Создаем кнопки с эмодзи
     const options = [...captchaSequence];
     const extraEmojis = ['🍌', '🥑', '🍊', '🥥', '🍐', '🥝', '🍅', '🌽'];
     const shuffledExtra = extraEmojis.sort(() => Math.random() - 0.5);
@@ -62,6 +84,8 @@ function initCaptcha() {
         }
     }
     options.sort(() => Math.random() - 0.5);
+    
+    console.log('🔘 Доступные эмодзи для выбора:', options);
     
     if (captchaOptions) {
         captchaOptions.innerHTML = '';
@@ -73,18 +97,25 @@ function initCaptcha() {
             btn.addEventListener('click', () => handleEmojiClick(btn, emoji));
             captchaOptions.appendChild(btn);
         });
+        console.log(`✅ Создано ${options.length} кнопок с эмодзи`);
+    } else {
+        console.error('❌ captchaOptions не найден!');
     }
     
+    // 4. Обновляем статус
     if (captchaStatus) {
         captchaStatus.textContent = '👆 Запомните последовательность эмодзи';
         captchaStatus.className = 'captcha-status';
+        console.log('✅ Статус обновлен');
     }
     
+    // 5. Блокируем кнопку проверки
     if (checkCaptchaBtn) {
         checkCaptchaBtn.disabled = true;
+        console.log('✅ Кнопка проверки заблокирована');
     }
     
-    // Скрываем строку через 3 секунды
+    // 6. Скрываем строку через 3 секунды
     setTimeout(() => {
         if (captchaString) {
             captchaString.style.opacity = '0.3';
@@ -98,13 +129,22 @@ function initCaptcha() {
         if (captchaStatus) {
             captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
         }
+        console.log('⏰ Строка скрыта, можно выбирать');
     }, 3000);
+    
+    console.log('✅ initCaptcha() завершен');
 }
 
 function handleEmojiClick(btn, emoji) {
-    if (!btn || btn.classList.contains('used') || isCaptchaCompleted) return;
+    console.log('👆 Нажат эмодзи:', emoji);
+    
+    if (!btn || btn.classList.contains('used') || isCaptchaCompleted) {
+        console.log('⛔ Кнопка уже использована или капча завершена');
+        return;
+    }
     
     userSelection.push(emoji);
+    console.log('📊 Текущий выбор:', userSelection);
     
     if (captchaInput) {
         const span = document.createElement('span');
@@ -124,6 +164,7 @@ function handleEmojiClick(btn, emoji) {
             captchaStatus.textContent = '✅ Все выбрано! Нажмите "Проверить"';
             captchaStatus.className = 'captcha-status success';
         }
+        console.log('✅ Все эмодзи выбраны!');
     } else {
         if (captchaStatus) {
             captchaStatus.textContent = `⏳ Выбрано: ${userSelection.length}/${captchaSequence.length}`;
@@ -133,9 +174,14 @@ function handleEmojiClick(btn, emoji) {
 }
 
 function checkCaptcha() {
+    console.log('🔍 Проверка капчи...');
+    console.log('Ожидалось:', captchaSequence);
+    console.log('Пользователь выбрал:', userSelection);
+    
     const isCorrect = userSelection.every((emoji, index) => emoji === captchaSequence[index]);
     
     if (isCorrect) {
+        console.log('✅ Капча пройдена!');
         if (captchaStatus) {
             captchaStatus.textContent = '🎉 Отлично! Капча пройдена!';
             captchaStatus.className = 'captcha-status success';
@@ -151,21 +197,19 @@ function checkCaptcha() {
             }
         });
         
-        // Сохраняем в localStorage, что капча пройдена
         localStorage.setItem('captchaPassed', 'true');
         
-        // Отправляем событие в бот
         tg.sendData(JSON.stringify({
             action: 'captcha_passed',
             user: user?.id,
             username: user?.username
         }));
         
-        // Переходим на главную страницу через 1.5 секунды
         setTimeout(() => {
             window.location.href = 'end.html';
         }, 1500);
     } else {
+        console.log('❌ Капча не пройдена!');
         if (captchaStatus) {
             captchaStatus.textContent = '❌ Неправильный порядок! Попробуйте снова';
             captchaStatus.className = 'captcha-status error';
@@ -187,6 +231,7 @@ function checkCaptcha() {
 }
 
 function resetCaptcha() {
+    console.log('🔄 Сброс капчи');
     userSelection = [];
     isCaptchaCompleted = false;
     
@@ -234,14 +279,25 @@ function resetCaptcha() {
 // ===== ОБРАБОТЧИКИ =====
 if (checkCaptchaBtn) {
     checkCaptchaBtn.addEventListener('click', checkCaptcha);
+    console.log('✅ Обработчик checkCaptchaBtn добавлен');
 }
 
 if (resetCaptchaBtn) {
     resetCaptchaBtn.addEventListener('click', resetCaptcha);
+    console.log('✅ Обработчик resetCaptchaBtn добавлен');
 }
 
 // ===== ЗАПУСК =====
-initCaptcha();
+// Ждем полной загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('📄 DOM загружен, запускаем капчу');
+        initCaptcha();
+    });
+} else {
+    console.log('📄 DOM уже загружен, запускаем капчу');
+    initCaptcha();
+}
 
 console.log('✅ Страница капчи загружена!');
 console.log('👤 Пользователь:', user);
