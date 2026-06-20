@@ -7,18 +7,19 @@ const user = tg.initDataUnsafe?.user;
 // ===== ПРАВИЛА =====
 const rules = [
     { emoji: '🤝', text: 'Будьте вежливы и уважайте друг друга' },
-    { emoji: '🚫', text: 'Запрещен спам, ссылки, реклама, флуд, бессвязные выкрики' },
+    { emoji: '🚫', text: 'Запрещен спам, реклама и флуд' },
     { emoji: '🔞', text: 'Запрещен контент 18+ и оскорбления' },
     { emoji: '📢', text: 'Обсуждайте только темы, связанные с чатом' },
+    { emoji: '🤖', text: 'Не используйте ботов для накрутки' },
     { emoji: '👤', text: 'Один аккаунт — один участник' },
-    { emoji: '📸', text: 'Не публикуйте личные данные других людей' },
-    { emoji: '💬', text: 'Приветствуются комментарии с вашим мнением, опытом или впечатлениями. Мы рады конструктивным дисскусиям и хорошей орфографии :)' }
+    { emoji: '📸', text: 'Не публикуйте личные данные других' },
+    { emoji: '💬', text: 'Используйте @username для упоминаний' },
 ];
 
 // ===== ГЕНЕРАЦИЯ КАПЧИ =====
 function generateCaptcha() {
     const emojis = ['🍎', '🍋', '🍇', '🍉', '🍓', '🍑', '🍒', '🥝', '🍍', '🥭'];
-    const count = 4 + Math.floor(Math.random() * 2); // 4 или 5 эмодзи
+    const count = 4 + Math.floor(Math.random() * 2);
     const selected = [];
     const shuffled = [...emojis].sort(() => Math.random() - 0.5);
     
@@ -33,8 +34,9 @@ function generateCaptcha() {
 let captchaSequence = [];
 let userSelection = [];
 let isCaptchaCompleted = false;
+let isCaptchaStringHidden = false;
 
-// ===== DOM ЭЛЕМЕНТЫ =====
+// ===== ПОЛУЧАЕМ ЭЛЕМЕНТЫ =====
 const rulesPage = document.getElementById('rulesPage');
 const captchaPage = document.getElementById('captchaPage');
 const mainPage = document.getElementById('mainPage');
@@ -58,18 +60,27 @@ const actionBtn = document.getElementById('actionBtn');
 const counterEl = document.getElementById('counter');
 const logoutBtn = document.getElementById('logoutBtn');
 
+// Проверяем, что все элементы найдены
+if (!checkCaptchaBtn) {
+    console.error('❌ Кнопка checkCaptchaBtn не найдена в DOM!');
+}
+
 let counter = 0;
 
 // ===== ФУНКЦИИ НАВИГАЦИИ =====
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    // Прокрутка вверх при смене страницы
-    document.getElementById(pageId).scrollTop = 0;
+    const page = document.getElementById(pageId);
+    if (page) {
+        page.classList.add('active');
+        page.scrollTop = 0;
+    }
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ ПРАВИЛ =====
 function renderRules() {
+    if (!rulesList) return;
+    
     rulesList.innerHTML = '';
     rules.forEach((rule, index) => {
         const div = document.createElement('div');
@@ -80,7 +91,6 @@ function renderRules() {
         `;
         rulesList.appendChild(div);
         
-        // Анимация появления с задержкой
         div.style.opacity = '0';
         div.style.transform = 'translateX(-20px)';
         setTimeout(() => {
@@ -90,12 +100,15 @@ function renderRules() {
         }, 100 + index * 50);
     });
     
-    // Отслеживание прокрутки для активации кнопки
-    rulesList.addEventListener('scroll', checkScrollComplete);
-    rulesList.addEventListener('touchmove', checkScrollComplete);
+    if (rulesList) {
+        rulesList.addEventListener('scroll', checkScrollComplete);
+        rulesList.addEventListener('touchmove', checkScrollComplete);
+    }
 }
 
 function checkScrollComplete() {
+    if (!rulesList || !agreeBtn || !scrollHint) return;
+    
     const el = rulesList;
     const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 5;
     
@@ -115,17 +128,19 @@ function initCaptcha() {
     captchaSequence = generateCaptcha();
     userSelection = [];
     isCaptchaCompleted = false;
+    isCaptchaStringHidden = false;
     
-    // Отображаем строку для запоминания
-    captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+    if (captchaString) {
+        captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+        captchaString.style.opacity = '1';
+    }
     
-    // Очищаем ввод
-    captchaInput.innerHTML = '';
-    captchaInput.classList.remove('filled');
+    if (captchaInput) {
+        captchaInput.innerHTML = '';
+        captchaInput.classList.remove('filled');
+    }
     
-    // Создаем кнопки с эмодзи (в случайном порядке)
     const options = [...captchaSequence];
-    // Добавляем лишние эмодзи для сложности
     const extraEmojis = ['🍌', '🥑', '🍊', '🥥', '🍐', '🥝', '🍅', '🌽'];
     const shuffledExtra = extraEmojis.sort(() => Math.random() - 0.5);
     for (let i = 0; i < 2; i++) {
@@ -133,58 +148,75 @@ function initCaptcha() {
             options.push(shuffledExtra[i]);
         }
     }
-    // Перемешиваем
     options.sort(() => Math.random() - 0.5);
     
-    captchaOptions.innerHTML = '';
-    options.forEach(emoji => {
-        const btn = document.createElement('button');
-        btn.className = 'btn-emoji';
-        btn.textContent = emoji;
-        btn.dataset.emoji = emoji;
-        btn.addEventListener('click', () => handleEmojiClick(btn, emoji));
-        captchaOptions.appendChild(btn);
-    });
+    if (captchaOptions) {
+        captchaOptions.innerHTML = '';
+        options.forEach(emoji => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-emoji';
+            btn.textContent = emoji;
+            btn.dataset.emoji = emoji;
+            btn.addEventListener('click', () => handleEmojiClick(btn, emoji));
+            captchaOptions.appendChild(btn);
+        });
+    }
     
-    captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
-    captchaStatus.className = 'captcha-status';
-    checkCaptchaBtn.disabled = true;
+    if (captchaStatus) {
+        captchaStatus.textContent = '👆 Запомните последовательность эмодзи';
+        captchaStatus.className = 'captcha-status';
+    }
+    
+    if (checkCaptchaBtn) {
+        checkCaptchaBtn.disabled = true;
+    }
     
     // Скрываем строку через 3 секунды
     setTimeout(() => {
-        captchaString.style.opacity = '3';
-        captchaString.style.transition = 'opacity 0.5s ease';
-        captchaString.innerHTML = '❓ Запомнили?';
-        setTimeout(() => {
-            captchaString.style.opacity = '1';
-        }, 300);
+        if (captchaString) {
+            captchaString.style.opacity = '0.3';
+            captchaString.innerHTML = '❓ Запомнили? Выберите в том же порядке';
+            isCaptchaStringHidden = true;
+            setTimeout(() => {
+                if (captchaString) {
+                    captchaString.style.opacity = '1';
+                }
+            }, 300);
+        }
+        if (captchaStatus) {
+            captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+        }
     }, 3000);
 }
 
 function handleEmojiClick(btn, emoji) {
-    if (btn.classList.contains('used') || isCaptchaCompleted) return;
+    if (!btn || btn.classList.contains('used') || isCaptchaCompleted) return;
     
-    // Добавляем в выбор пользователя
     userSelection.push(emoji);
     
-    // Отображаем в поле ввода
-    const span = document.createElement('span');
-    span.className = 'emoji-item';
-    span.textContent = emoji;
-    captchaInput.appendChild(span);
-    captchaInput.classList.add('filled');
+    if (captchaInput) {
+        const span = document.createElement('span');
+        span.className = 'emoji-item';
+        span.textContent = emoji;
+        captchaInput.appendChild(span);
+        captchaInput.classList.add('filled');
+    }
     
-    // Отмечаем кнопку как использованную
     btn.classList.add('used');
     
-    // Проверяем, не собрана ли вся последовательность
     if (userSelection.length === captchaSequence.length) {
-        checkCaptchaBtn.disabled = false;
-        captchaStatus.textContent = '✅ Все выбрано! Нажмите "Проверить"';
-        captchaStatus.className = 'captcha-status success';
+        if (checkCaptchaBtn) {
+            checkCaptchaBtn.disabled = false;
+        }
+        if (captchaStatus) {
+            captchaStatus.textContent = '✅ Все выбрано! Нажмите "Проверить"';
+            captchaStatus.className = 'captcha-status success';
+        }
     } else {
-        captchaStatus.textContent = `⏳ Выбрано: ${userSelection.length}/${captchaSequence.length}`;
-        captchaStatus.className = 'captcha-status';
+        if (captchaStatus) {
+            captchaStatus.textContent = `⏳ Выбрано: ${userSelection.length}/${captchaSequence.length}`;
+            captchaStatus.className = 'captcha-status';
+        }
     }
 }
 
@@ -192,33 +224,39 @@ function checkCaptcha() {
     const isCorrect = userSelection.every((emoji, index) => emoji === captchaSequence[index]);
     
     if (isCorrect) {
-        captchaStatus.textContent = '🎉 Отлично! Капча пройдена!';
-        captchaStatus.className = 'captcha-status success';
+        if (captchaStatus) {
+            captchaStatus.textContent = '🎉 Отлично! Капча пройдена!';
+            captchaStatus.className = 'captcha-status success';
+        }
         isCaptchaCompleted = true;
-        checkCaptchaBtn.disabled = true;
+        if (checkCaptchaBtn) {
+            checkCaptchaBtn.disabled = true;
+        }
         
-        // Подсвечиваем правильные кнопки
         document.querySelectorAll('.btn-emoji').forEach(btn => {
             if (btn.dataset.emoji && captchaSequence.includes(btn.dataset.emoji)) {
                 btn.classList.add('correct');
             }
         });
         
-        // Переход на основную страницу через 1.5 секунды
         setTimeout(() => {
             showMainPage();
         }, 1500);
     } else {
-        captchaStatus.textContent = '❌ Неправильный порядок! Попробуйте снова';
-        captchaStatus.className = 'captcha-status error';
+        if (captchaStatus) {
+            captchaStatus.textContent = '❌ Неправильный порядок! Попробуйте снова';
+            captchaStatus.className = 'captcha-status error';
+        }
         
-        // Анимация ошибки
-        captchaInput.style.borderColor = '#f44336';
-        setTimeout(() => {
-            captchaInput.style.borderColor = '';
-        }, 1000);
+        if (captchaInput) {
+            captchaInput.style.borderColor = '#f44336';
+            setTimeout(() => {
+                if (captchaInput) {
+                    captchaInput.style.borderColor = '';
+                }
+            }, 1000);
+        }
         
-        // Сбрасываем через 1.5 секунды
         setTimeout(() => {
             resetCaptcha();
         }, 1500);
@@ -226,33 +264,46 @@ function checkCaptcha() {
 }
 
 function resetCaptcha() {
-    // Сбрасываем состояние
     userSelection = [];
     isCaptchaCompleted = false;
-    captchaInput.innerHTML = '';
-    captchaInput.classList.remove('filled');
-    checkCaptchaBtn.disabled = true;
     
-    // Сбрасываем кнопки
+    if (captchaInput) {
+        captchaInput.innerHTML = '';
+        captchaInput.classList.remove('filled');
+    }
+    
+    if (checkCaptchaBtn) {
+        checkCaptchaBtn.disabled = true;
+    }
+    
     document.querySelectorAll('.btn-emoji').forEach(btn => {
         btn.classList.remove('used', 'correct', 'wrong');
     });
     
-    // Показываем строку снова
-    captchaString.style.opacity = '1';
-    captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
-    captchaStatus.textContent = '🔄 Начните заново!';
-    captchaStatus.className = 'captcha-status';
+    if (captchaString) {
+        captchaString.style.opacity = '1';
+        captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+    }
+    
+    if (captchaStatus) {
+        captchaStatus.textContent = '🔄 Начните заново!';
+        captchaStatus.className = 'captcha-status';
+    }
     
     setTimeout(() => {
-        captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
-        // Скрываем строку снова через 2 секунды
+        if (captchaStatus) {
+            captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+        }
         setTimeout(() => {
-            captchaString.style.opacity = '0.3';
-            captchaString.innerHTML = '❓ Запомнили?';
-            setTimeout(() => {
-                captchaString.style.opacity = '1';
-            }, 300);
+            if (captchaString) {
+                captchaString.style.opacity = '0.3';
+                captchaString.innerHTML = '❓ Запомнили?';
+                setTimeout(() => {
+                    if (captchaString) {
+                        captchaString.style.opacity = '1';
+                    }
+                }, 300);
+            }
         }, 2000);
     }, 1000);
 }
@@ -261,7 +312,7 @@ function resetCaptcha() {
 function showMainPage() {
     showPage('mainPage');
     
-    if (user) {
+    if (user && userNameEl && avatarEl && welcomeText) {
         const firstName = user.first_name || 'Гость';
         const lastName = user.last_name || '';
         const username = user.username || '';
@@ -276,7 +327,6 @@ function showMainPage() {
         `;
     }
     
-    // Отправляем событие в бот о успешной верификации
     tg.sendData(JSON.stringify({
         action: 'verified',
         user: user?.id,
@@ -292,76 +342,129 @@ function getInitials(firstName, lastName) {
     return initials;
 }
 
-// ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
-
-// 1. Согласие с правилами
-agreeBtn.addEventListener('click', () => {
-    showPage('captchaPage');
-    initCaptcha();
-});
-
-// 2. Проверка капчи
-checkCaptchaBtn.addEventListener('click', checkCaptcha);
-
-// 3. Сброс капчи
-resetCaptchaBtn.addEventListener('click', resetCaptcha);
-
-// 4. Основная кнопка
-actionBtn.addEventListener('click', () => {
-    counter++;
-    counterEl.textContent = counter;
-    
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('light');
-    }
-    
-    if (counter % 5 === 0) {
-        tg.showAlert(`🎉 Ты нажал ${counter} раз!`);
-    }
-    
-    tg.sendData(JSON.stringify({
-        action: 'button_click',
-        count: counter,
-        user: user?.id
-    }));
-});
-
-// 5. Выход
-logoutBtn.addEventListener('click', () => {
-    if (confirm('Вы уверены, что хотите выйти?')) {
-        counter = 0;
-        counterEl.textContent = '0';
-        showPage('rulesPage');
-        // Сбрасываем состояние правил
-        rulesList.scrollTop = 0;
-        agreeBtn.disabled = true;
-        scrollHint.style.display = 'block';
-        agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
-    }
-});
-
 // ===== ИНИЦИАЛИЗАЦИЯ =====
-renderRules();
-showPage('rulesPage');
+// Функция для проверки готовности DOM
+function initApp() {
+    console.log('🚀 Инициализация приложения...');
+    
+    // Проверяем наличие всех элементов
+    const elements = {
+        rulesPage, captchaPage, mainPage,
+        rulesList, agreeBtn, scrollHint,
+        captchaString, captchaInput, captchaOptions,
+        captchaStatus, checkCaptchaBtn, resetCaptchaBtn,
+        userNameEl, avatarEl, userStatusEl, welcomeText,
+        actionBtn, counterEl, logoutBtn
+    };
+    
+    const missingElements = Object.entries(elements)
+        .filter(([name, el]) => !el)
+        .map(([name]) => name);
+    
+    if (missingElements.length > 0) {
+        console.warn('⚠️ Отсутствуют элементы:', missingElements.join(', '));
+    } else {
+        console.log('✅ Все элементы найдены');
+    }
+    
+    // Рендерим правила
+    renderRules();
+    
+    // Показываем страницу правил
+    showPage('rulesPage');
+    
+    // Настраиваем обработчики событий (только если элементы существуют)
+    if (agreeBtn) {
+        agreeBtn.addEventListener('click', () => {
+            showPage('captchaPage');
+            initCaptcha();
+        });
+    }
+    
+    if (checkCaptchaBtn) {
+        checkCaptchaBtn.addEventListener('click', checkCaptcha);
+    }
+    
+    if (resetCaptchaBtn) {
+        resetCaptchaBtn.addEventListener('click', resetCaptcha);
+    }
+    
+    if (actionBtn) {
+        actionBtn.addEventListener('click', () => {
+            counter++;
+            if (counterEl) {
+                counterEl.textContent = counter;
+            }
+            
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+            
+            if (counter % 5 === 0) {
+                tg.showAlert(`🎉 Ты нажал ${counter} раз!`);
+            }
+            
+            tg.sendData(JSON.stringify({
+                action: 'button_click',
+                count: counter,
+                user: user?.id
+            }));
+        });
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                counter = 0;
+                if (counterEl) {
+                    counterEl.textContent = '0';
+                }
+                showPage('rulesPage');
+                if (rulesList) {
+                    rulesList.scrollTop = 0;
+                }
+                if (agreeBtn) {
+                    agreeBtn.disabled = true;
+                }
+                if (scrollHint) {
+                    scrollHint.style.display = 'block';
+                }
+                if (agreeBtn) {
+                    agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
+                }
+            }
+        });
+    }
+    
+    // Настройка главной кнопки
+    if (tg.MainButton) {
+        tg.MainButton.setText('📋 Правила');
+        tg.MainButton.show();
+        
+        tg.MainButton.onClick(() => {
+            if (rulesList) {
+                rulesList.scrollTop = 0;
+            }
+        });
+    }
+    
+    // Обработка темы
+    tg.onEvent('themeChanged', () => {
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#0088cc');
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f5f5f5');
+        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
+    });
+    
+    console.log('✅ Мини-приложение загружено!');
+    console.log('👤 Пользователь:', user);
+}
 
-// Настройка главной кнопки
-tg.MainButton.setText('📋 Правила');
-tg.MainButton.show();
-
-tg.MainButton.onClick(() => {
-    // Прокрутка к правилам
-    rulesList.scrollTop = 0;
-});
-
-// Обработка темы
-tg.onEvent('themeChanged', () => {
-    document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
-    document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
-    document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#0088cc');
-    document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
-    document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f5f5f5');
-    document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
-});
-
-console.log('✅ Мини-приложение загружено!');
-console.log('👤 Пользователь:', user);
+// Запускаем приложение когда DOM готов
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
