@@ -770,7 +770,16 @@
                 };
                 
                 console.log('📤 Отправка данных в ботааа:', dataToSend);
-                tg.sendData(JSON.stringify(dataToSend));
+                // В Web App (клиентская сторона)
+                if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                
+                // Отправка данных и автоматическое закрытие Web App
+                Telegram.WebApp.sendData(JSON.stringify(dataToSend));
+                } else {
+                    console.warn('⚠️ Telegram WebApp API недоступен. Данные не отправлены.');
+                }
+
                 
                 
 
