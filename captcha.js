@@ -288,7 +288,11 @@ if (resetCaptchaBtn) {
 }
 
 // ===== ЗАПУСК =====
+<<<<<<< HEAD
 // Ждем полной загрузки DOM fdsfdf
+=======
+// Ждем полной загрузки DOM
+>>>>>>> abd6576 (edit captcha script)
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         console.log('📄 DOM загружен, запускаем капчу');
