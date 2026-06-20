@@ -5,14 +5,405 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Верификация</title>
     
-    <!-- Подключаем Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            min-height: 100vh;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #app {
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .page {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .page.active {
+            display: flex !important;
+            opacity: 1;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 24px;
+            padding: 30px 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .icon-big {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0088cc, #00bfff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+            -webkit-text-fill-color: var(--tg-theme-hint-color, #999);
+        }
+
+        /* Правила */
+        .rules-list {
+            margin: 16px 0;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .rules-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .rules-list::-webkit-scrollbar-thumb {
+            background: var(--tg-theme-button-color, #0088cc);
+            border-radius: 2px;
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .rule-item .emoji {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .rule-item .text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .scroll-hint {
+            text-align: center;
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #999);
+            padding: 8px;
+            animation: bounce 1.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* Кнопки */
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .btn-secondary {
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            border: 2px solid var(--tg-theme-hint-color, #ddd);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--tg-theme-button-color, #0088cc);
+        }
+
+        /* Капча */
+        .captcha-section {
+            margin: 16px 0;
+        }
+
+        .captcha-string {
+            font-size: 36px;
+            text-align: center;
+            padding: 20px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 16px;
+            letter-spacing: 12px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            border: 2px dashed var(--tg-theme-button-color, #0088cc);
+            user-select: none;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .captcha-input {
+            font-size: 32px;
+            text-align: center;
+            padding: 12px 20px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 12px;
+            min-height: 60px;
+            border: 2px solid var(--tg-theme-hint-color, #ddd);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: border-color 0.3s ease;
+            flex-wrap: wrap;
+        }
+
+        .captcha-input.filled {
+            border-color: var(--tg-theme-button-color, #0088cc);
+        }
+
+        .captcha-input .emoji-item {
+            display: inline-block;
+            animation: popIn 0.2s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .captcha-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .captcha-options .btn-emoji {
+            padding: 14px;
+            font-size: 28px;
+            border: 2px solid var(--tg-theme-hint-color, #ddd);
+            border-radius: 12px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .captcha-options .btn-emoji:hover {
+            transform: scale(1.05);
+            border-color: var(--tg-theme-button-color, #0088cc);
+        }
+
+        .captcha-options .btn-emoji:active {
+            transform: scale(0.92);
+        }
+
+        .captcha-options .btn-emoji.used {
+            opacity: 0.3;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+
+        .captcha-options .btn-emoji.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .captcha-options .btn-emoji.wrong {
+            border-color: #f44336;
+            background: #ffebee;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .captcha-status {
+            text-align: center;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+            padding: 8px;
+            min-height: 40px;
+        }
+
+        .captcha-status.success {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .captcha-status.error {
+            color: #f44336;
+        }
+
+        /* Основная страница */
+        .user-info {
+            text-align: center;
+            padding: 20px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            background: linear-gradient(135deg, #0088cc, #00bfff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+        }
+
+        .user-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-status {
+            font-size: 14px;
+            color: #4caf50;
+            font-weight: 500;
+        }
+
+        .welcome-card {
+            background: var(--tg-theme-bg-color, #ffffff);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .welcome-card p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .counter-box {
+            text-align: center;
+            padding: 16px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 16px;
+            margin-bottom: 8px;
+        }
+
+        .counter-box p {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+            margin-bottom: 4px;
+        }
+
+        .counter-box span {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 16px;
+            }
+            
+            .captcha-options {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            
+            .captcha-options .btn-emoji {
+                font-size: 24px;
+                padding: 10px;
+            }
+            
+            .captcha-string {
+                font-size: 28px;
+                letter-spacing: 8px;
+                padding: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="app">
-        <!-- СТРАНИЦА 1: ПРАВИЛАааа -->
+        <!-- СТРАНИЦА 1: ПРАВИЛА -->
         <div class="page active" id="rulesPage">
             <div class="container">
                 <div class="header">
@@ -24,14 +415,532 @@
                 <div class="rules-list" id="rulesList">
                     <!-- Правила будут добавлены через JS -->
                 </div>
-                    <button class="btn btn-primary btn-bottom" id="agreeBtn" disabled>
-                        📖 Я прочитал(а), я согласен(на)
-                    </button>
+                
+                <button class="btn btn-primary btn-bottom" id="agreeBtn" disabled>
+                    📖 Я прочитал(а), я согласен(на)
+                </button>
                 <div class="scroll-hint" id="scrollHint">⬇️ Прокрутите до конца ⬇️</div>
+            </div>
+        </div>
+
+        <!-- СТРАНИЦА 2: КАПЧА -->
+        <div class="page" id="captchaPage">
+            <div class="container">
+                <div class="header">
+                    <div class="icon-big">🧩</div>
+                    <h1>Проверка</h1>
+                    <p class="subtitle">Нажмите эмодзи в правильном порядке</p>
+                </div>
+                
+                <div class="captcha-section">
+                    <div class="captcha-string" id="captchaString">
+                        <!-- Эмодзи для запоминания -->
+                    </div>
+                    
+                    <div class="captcha-input" id="captchaInput">
+                        <!-- Выбранные эмодзи будут появляться здесь -->
+                    </div>
+                    
+                    <div class="captcha-options" id="captchaOptions">
+                        <!-- Кнопки с эмодзи -->
+                    </div>
+                    
+                    <div class="captcha-status" id="captchaStatus">
+                        👆 Запомните последовательность эмодзи
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="checkCaptchaBtn" disabled>
+                    ✅ Проверить
+                </button>
+                <button class="btn btn-secondary" id="resetCaptchaBtn">
+                    🔄 Начать заново
+                </button>
+            </div>
+        </div>
+
+        <!-- СТРАНИЦА 3: ОСНОВНОЙ КОНТЕНТ -->
+        <div class="page" id="mainPage">
+            <div class="container">
+                <div class="header">
+                    <div class="icon-big">🎉</div>
+                    <h1>Добро пожаловать!</h1>
+                    <p class="subtitle">Вы успешно прошли верификацию</p>
+                </div>
+                
+                <div class="user-info">
+                    <div class="avatar" id="avatar"></div>
+                    <div class="user-name" id="userName">Загрузка...</div>
+                    <div class="user-status" id="userStatus">✅ Верифицирован</div>
+                </div>
+                
+                <div class="welcome-card">
+                    <p id="welcomeText">
+                        Рады видеть тебя в нашем чате! 🎉
+                    </p>
+                    <button class="btn btn-primary" id="actionBtn">
+                        Нажми меня!
+                    </button>
+                </div>
+                
+                <div class="counter-box">
+                    <p>Количество нажатий:</p>
+                    <span id="counter">0</span>
+                </div>
+                
+                <button class="btn btn-secondary" id="logoutBtn">
+                    🚪 Выйти
+                </button>
             </div>
         </div>
     </div>
     
-    <script src="script.js"></script>
+    <script>
+        // ============================================================
+        // ВЕСЬ JAVASCRIPT КОД ЗДЕСЬ
+        // ============================================================
+        
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const user = tg.initDataUnsafe?.user;
+
+        // ===== ПРАВИЛА =====
+        const rules = [
+            { emoji: '🤝', text: 'Будьте вежливы и уважайте друг друга' },
+            { emoji: '🚫', text: 'Запрещен спам, реклама и флуд' },
+            { emoji: '🔞', text: 'Запрещен контент 18+ и оскорбления' },
+            { emoji: '📢', text: 'Обсуждайте только темы, связанные с чатом' },
+            { emoji: '🤖', text: 'Не используйте ботов для накрутки' },
+            { emoji: '👤', text: 'Один аккаунт — один участник' },
+            { emoji: '📸', text: 'Не публикуйте личные данные других' },
+            { emoji: '💬', text: 'Используйте @username для упоминаний' },
+        ];
+
+        // ===== ГЕНЕРАЦИЯ КАПЧИ =====
+        function generateCaptcha() {
+            const emojis = ['🍎', '🍋', '🍇', '🍉', '🍓', '🍑', '🍒', '🥝', '🍍', '🥭'];
+            const count = 4 + Math.floor(Math.random() * 2);
+            const selected = [];
+            const shuffled = [...emojis].sort(() => Math.random() - 0.5);
+            
+            for (let i = 0; i < count; i++) {
+                selected.push(shuffled[i]);
+            }
+            
+            return selected;
+        }
+
+        // ===== СОСТОЯНИЕ =====
+        let captchaSequence = [];
+        let userSelection = [];
+        let isCaptchaCompleted = false;
+        let counter = 0;
+
+        // ===== DOM ЭЛЕМЕНТЫ =====
+        // Страницы
+        const rulesPage = document.getElementById('rulesPage');
+        const captchaPage = document.getElementById('captchaPage');
+        const mainPage = document.getElementById('mainPage');
+
+        // Правила
+        const rulesList = document.getElementById('rulesList');
+        const agreeBtn = document.getElementById('agreeBtn');
+        const scrollHint = document.getElementById('scrollHint');
+
+        // Капча
+        const captchaString = document.getElementById('captchaString');
+        const captchaInput = document.getElementById('captchaInput');
+        const captchaOptions = document.getElementById('captchaOptions');
+        const captchaStatus = document.getElementById('captchaStatus');
+        const checkCaptchaBtn = document.getElementById('checkCaptchaBtn');
+        const resetCaptchaBtn = document.getElementById('resetCaptchaBtn');
+
+        // Основная страница
+        const userNameEl = document.getElementById('userName');
+        const avatarEl = document.getElementById('avatar');
+        const userStatusEl = document.getElementById('userStatus');
+        const welcomeText = document.getElementById('welcomeText');
+        const actionBtn = document.getElementById('actionBtn');
+        const counterEl = document.getElementById('counter');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // ===== ФУНКЦИИ НАВИГАЦИИ =====
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+            const page = document.getElementById(pageId);
+            if (page) {
+                page.classList.add('active');
+                page.scrollTop = 0;
+            }
+        }
+
+        // ===== ИНИЦИАЛИЗАЦИЯ ПРАВИЛ =====
+        function renderRules() {
+            if (!rulesList) return;
+            
+            rulesList.innerHTML = '';
+            rules.forEach((rule, index) => {
+                const div = document.createElement('div');
+                div.className = 'rule-item';
+                div.innerHTML = `
+                    <span class="emoji">${rule.emoji}</span>
+                    <span class="text">${rule.text}</span>
+                `;
+                rulesList.appendChild(div);
+                
+                div.style.opacity = '0';
+                div.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    div.style.transition = 'all 0.3s ease';
+                    div.style.opacity = '1';
+                    div.style.transform = 'translateX(0)';
+                }, 100 + index * 50);
+            });
+            
+            if (rulesList) {
+                rulesList.addEventListener('scroll', checkScrollComplete);
+                rulesList.addEventListener('touchmove', checkScrollComplete);
+            }
+        }
+
+        function checkScrollComplete() {
+            if (!rulesList || !agreeBtn || !scrollHint) return;
+            
+            const el = rulesList;
+            const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 5;
+            
+            if (isAtBottom) {
+                agreeBtn.disabled = false;
+                scrollHint.style.display = 'none';
+                agreeBtn.textContent = '✅ Я прочитал(а), я согласен(на)';
+            } else {
+                agreeBtn.disabled = true;
+                scrollHint.style.display = 'block';
+                agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
+            }
+        }
+
+        // ===== ИНИЦИАЛИЗАЦИЯ КАПЧИ =====
+        function initCaptcha() {
+            captchaSequence = generateCaptcha();
+            userSelection = [];
+            isCaptchaCompleted = false;
+            
+            if (captchaString) {
+                captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+                captchaString.style.opacity = '1';
+            }
+            
+            if (captchaInput) {
+                captchaInput.innerHTML = '';
+                captchaInput.classList.remove('filled');
+            }
+            
+            const options = [...captchaSequence];
+            const extraEmojis = ['🍌', '🥑', '🍊', '🥥', '🍐', '🥝', '🍅', '🌽'];
+            const shuffledExtra = extraEmojis.sort(() => Math.random() - 0.5);
+            for (let i = 0; i < 2; i++) {
+                if (shuffledExtra[i] && !options.includes(shuffledExtra[i])) {
+                    options.push(shuffledExtra[i]);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            if (captchaOptions) {
+                captchaOptions.innerHTML = '';
+                options.forEach(emoji => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-emoji';
+                    btn.textContent = emoji;
+                    btn.dataset.emoji = emoji;
+                    btn.addEventListener('click', () => handleEmojiClick(btn, emoji));
+                    captchaOptions.appendChild(btn);
+                });
+            }
+            
+            if (captchaStatus) {
+                captchaStatus.textContent = '👆 Запомните последовательность эмодзи';
+                captchaStatus.className = 'captcha-status';
+            }
+            
+            if (checkCaptchaBtn) {
+                checkCaptchaBtn.disabled = true;
+            }
+            
+            setTimeout(() => {
+                if (captchaString) {
+                    captchaString.style.opacity = '0.3';
+                    captchaString.innerHTML = '❓ Запомнили? Выберите в том же порядке';
+                    setTimeout(() => {
+                        if (captchaString) {
+                            captchaString.style.opacity = '1';
+                        }
+                    }, 300);
+                }
+                if (captchaStatus) {
+                    captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+                }
+            }, 3000);
+        }
+
+        function handleEmojiClick(btn, emoji) {
+            if (!btn || btn.classList.contains('used') || isCaptchaCompleted) return;
+            
+            userSelection.push(emoji);
+            
+            if (captchaInput) {
+                const span = document.createElement('span');
+                span.className = 'emoji-item';
+                span.textContent = emoji;
+                captchaInput.appendChild(span);
+                captchaInput.classList.add('filled');
+            }
+            
+            btn.classList.add('used');
+            
+            if (userSelection.length === captchaSequence.length) {
+                if (checkCaptchaBtn) {
+                    checkCaptchaBtn.disabled = false;
+                }
+                if (captchaStatus) {
+                    captchaStatus.textContent = '✅ Все выбрано! Нажмите "Проверить"';
+                    captchaStatus.className = 'captcha-status success';
+                }
+            } else {
+                if (captchaStatus) {
+                    captchaStatus.textContent = `⏳ Выбрано: ${userSelection.length}/${captchaSequence.length}`;
+                    captchaStatus.className = 'captcha-status';
+                }
+            }
+        }
+
+        function checkCaptcha() {
+            const isCorrect = userSelection.every((emoji, index) => emoji === captchaSequence[index]);
+            
+            if (isCorrect) {
+                if (captchaStatus) {
+                    captchaStatus.textContent = '🎉 Отлично! Капча пройдена!';
+                    captchaStatus.className = 'captcha-status success';
+                }
+                isCaptchaCompleted = true;
+                if (checkCaptchaBtn) {
+                    checkCaptchaBtn.disabled = true;
+                }
+                
+                document.querySelectorAll('.btn-emoji').forEach(btn => {
+                    if (btn.dataset.emoji && captchaSequence.includes(btn.dataset.emoji)) {
+                        btn.classList.add('correct');
+                    }
+                });
+                
+                tg.sendData(JSON.stringify({
+                    action: 'captcha_passed',
+                    user: user?.id,
+                    username: user?.username
+                }));
+                
+                setTimeout(() => {
+                    showPage('mainPage');
+                    showMainPage();
+                }, 1500);
+            } else {
+                if (captchaStatus) {
+                    captchaStatus.textContent = '❌ Неправильный порядок! Попробуйте снова';
+                    captchaStatus.className = 'captcha-status error';
+                }
+                
+                if (captchaInput) {
+                    captchaInput.style.borderColor = '#f44336';
+                    setTimeout(() => {
+                        if (captchaInput) {
+                            captchaInput.style.borderColor = '';
+                        }
+                    }, 1000);
+                }
+                
+                setTimeout(() => {
+                    resetCaptcha();
+                }, 1500);
+            }
+        }
+
+        function resetCaptcha() {
+            userSelection = [];
+            isCaptchaCompleted = false;
+            
+            if (captchaInput) {
+                captchaInput.innerHTML = '';
+                captchaInput.classList.remove('filled');
+            }
+            
+            if (checkCaptchaBtn) {
+                checkCaptchaBtn.disabled = true;
+            }
+            
+            document.querySelectorAll('.btn-emoji').forEach(btn => {
+                btn.classList.remove('used', 'correct', 'wrong');
+            });
+            
+            if (captchaString) {
+                captchaString.style.opacity = '1';
+                captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+            }
+            
+            if (captchaStatus) {
+                captchaStatus.textContent = '🔄 Начните заново!';
+                captchaStatus.className = 'captcha-status';
+            }
+            
+            setTimeout(() => {
+                if (captchaStatus) {
+                    captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+                }
+                setTimeout(() => {
+                    if (captchaString) {
+                        captchaString.style.opacity = '0.3';
+                        captchaString.innerHTML = '❓ Запомнили?';
+                        setTimeout(() => {
+                            if (captchaString) {
+                                captchaString.style.opacity = '1';
+                            }
+                        }, 300);
+                    }
+                }, 2000);
+            }, 1000);
+        }
+
+        // ===== ОСНОВНАЯ СТРАНИЦА =====
+        function showMainPage() {
+            if (user && userNameEl && avatarEl && welcomeText) {
+                const firstName = user.first_name || 'Гость';
+                const lastName = user.last_name || '';
+                const username = user.username || '';
+                
+                userNameEl.textContent = `${firstName} ${lastName}`.trim();
+                avatarEl.textContent = getInitials(firstName, lastName);
+                welcomeText.innerHTML = `
+                    Рады видеть тебя, <strong>${firstName}</strong>! 🎉<br>
+                    <span style="font-size:14px; color: var(--tg-theme-hint-color, #999);">
+                        ${username ? `@${username}` : 'Добро пожаловать!'}
+                    </span>
+                `;
+            }
+        }
+
+        function getInitials(firstName, lastName) {
+            let initials = firstName.charAt(0).toUpperCase();
+            if (lastName && lastName.length > 0) {
+                initials += lastName.charAt(0).toUpperCase();
+            }
+            return initials;
+        }
+
+        // ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
+        
+        // 1. Согласие с правилами
+        if (agreeBtn) {
+            agreeBtn.addEventListener('click', () => {
+                tg.sendData(JSON.stringify({
+                    action: 'rules_accepted',
+                    user: user?.id,
+                    username: user?.username
+                }));
+                showPage('captchaPage');
+                initCaptcha();
+            });
+        }
+
+        // 2. Проверка капчи
+        if (checkCaptchaBtn) {
+            checkCaptchaBtn.addEventListener('click', checkCaptcha);
+        }
+
+        // 3. Сброс капчи
+        if (resetCaptchaBtn) {
+            resetCaptchaBtn.addEventListener('click', resetCaptcha);
+        }
+
+        // 4. Основная кнопка
+        if (actionBtn) {
+            actionBtn.addEventListener('click', () => {
+                counter++;
+                if (counterEl) {
+                    counterEl.textContent = counter;
+                }
+                
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('light');
+                }
+                
+                if (counter % 5 === 0) {
+                    tg.showAlert(`🎉 Ты нажал ${counter} раз!`);
+                }
+                
+                tg.sendData(JSON.stringify({
+                    action: 'button_click',
+                    count: counter,
+                    user: user?.id
+                }));
+            });
+        }
+
+        // 5. Выход
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены, что хотите выйти?')) {
+                    counter = 0;
+                    if (counterEl) {
+                        counterEl.textContent = '0';
+                    }
+                    showPage('rulesPage');
+                    if (rulesList) {
+                        rulesList.scrollTop = 0;
+                    }
+                    if (agreeBtn) {
+                        agreeBtn.disabled = true;
+                    }
+                    if (scrollHint) {
+                        scrollHint.style.display = 'block';
+                    }
+                    if (agreeBtn) {
+                        agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
+                    }
+                }
+            });
+        }
+
+        // ===== ЗАПУСК =====
+        renderRules();
+        showPage('rulesPage');
+
+        // Настройка главной кнопки
+        if (tg.MainButton) {
+            tg.MainButton.setText('📋 Правила');
+            tg.MainButton.show();
+            
+            tg.MainButton.onClick(() => {
+                if (rulesList) {
+                    rulesList.scrollTop = 0;
+                }
+            });
+        }
+
+        // Обработка темы
+        tg.onEvent('themeChanged', () => {
+            document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+            document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#0088cc');
+            document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f5f5f5');
+            document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
+        });
+
+        console.log('✅ Мини-приложение загружено!');
+        console.log('👤 Пользователь:', user);
+    </script>
 </body>
 </html>
