@@ -773,18 +773,7 @@
                 // В Web App (клиентская сторона)
                 if (window.Telegram?.WebApp) {
                 Telegram.WebApp.ready();
-                
-                // Отправка данных и автоматическое закрытие Web App
-                Telegram.WebApp.sendData(JSON.stringify(dataToSend));
-                } else {
-                    console.warn('⚠️ Telegram WebApp API недоступен. Данные не отправлены.');
-                }
-
-                
-                
-
-
-
+            
                 setTimeout(() => {
                     showPage('mainPage');
                     showMainPage();
@@ -951,6 +940,14 @@
                     if (agreeBtn) {
                         agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
                     }
+
+                    tg.sendData(JSON.stringify({
+                        action: 'user_logged_out',
+                        user: user?.id,
+                        username: user?.username
+                    }));
+                    Telegram.WebApp.close();
+                    
                 }
             });
         }
