@@ -771,9 +771,8 @@
                 
                 console.log('📤 Отправка данных в ботааа:', dataToSend);
                 // В Web App (клиентская сторона)
-                if (window.Telegram?.WebApp) {
-                Telegram.WebApp.ready();
-            
+                
+                
                 setTimeout(() => {
                     showPage('mainPage');
                     showMainPage();
@@ -923,13 +922,8 @@
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 if (confirm('Вы уверены, что хотите выйти?')) {
-                    counter = 0;
                     if (counterEl) {
                         counterEl.textContent = '0';
-                    }
-                    showPage('rulesPage');
-                    if (rulesList) {
-                        rulesList.scrollTop = 0;
                     }
                     if (agreeBtn) {
                         agreeBtn.disabled = true;
@@ -940,14 +934,12 @@
                     if (agreeBtn) {
                         agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
                     }
-
                     tg.sendData(JSON.stringify({
                         action: 'user_logged_out',
                         user: user?.id,
                         username: user?.username
                     }));
-                    Telegram.WebApp.close();
-                    
+                    tg.close();
                 }
             });
         }
