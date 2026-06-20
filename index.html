@@ -3,50 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Мой Миниап</title>
+    <title>Верификация</title>
     
     <!-- Подключаем Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <!-- Подключаем стили -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container" id="app">
-        <div class="header">
-            <h1>👋 Привет!</h1>
-        </div>
-        
-        <div class="content">
-            <div class="user-info">
-                <div class="avatar" id="avatar">
-                    <!-- Будет динамически заполняться -->
+    <div id="app">
+        <!-- СТРАНИЦА 1: ПРАВИЛА -->
+        <div class="page active" id="rulesPage">
+            <div class="container">
+                <div class="header">
+                    <div class="icon-big">📋</div>
+                    <h1>Правила чата</h1>
+                    <p class="subtitle">Пожалуйста, ознакомьтесь с правилами перед входом</p>
                 </div>
-                <div class="user-name" id="userName">
-                    Загрузка...
+                
+                <div class="rules-list" id="rulesList">
+                    <!-- Правила будут добавлены через JS -->
                 </div>
-                <div class="user-status" id="userStatus">
-                    Добро пожаловать!
-                </div>
+                
+                <button class="btn btn-primary btn-bottom" id="agreeBtn" disabled>
+                    📖 Я прочитал(а), я согласен(на)
+                </button>
+                <div class="scroll-hint" id="scrollHint">⬇️ Прокрутите до конца ⬇️</div>
             </div>
-            
-            <div class="greeting-card">
-                <p id="greetingText">
-                    Рады видеть тебя в нашем мини-приложении! 🎉
-                </p>
-                <button class="btn btn-primary" id="actionBtn">
-                    Нажми меня!
+        </div>
+
+        <!-- СТРАНИЦА 2: КАПЧА -->
+        <div class="page" id="captchaPage">
+            <div class="container">
+                <div class="header">
+                    <div class="icon-big">🧩</div>
+                    <h1>Проверка</h1>
+                    <p class="subtitle">Нажмите эмодзи в правильном порядке</p>
+                </div>
+                
+                <div class="captcha-section">
+                    <div class="captcha-string" id="captchaString">
+                        <!-- Эмодзи для запоминания -->
+                    </div>
+                    
+                    <div class="captcha-input" id="captchaInput">
+                        <!-- Выбранные эмодзи будут появляться здесь -->
+                    </div>
+                    
+                    <div class="captcha-options" id="captchaOptions">
+                        <!-- Кнопки с эмодзи -->
+                    </div>
+                    
+                    <div class="captcha-status" id="captchaStatus">
+                        👆 Выберите эмодзи в том же порядке
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="checkCaptchaBtn" disabled>
+                    ✅ Проверить
+                </button>
+                <button class="btn btn-secondary" id="resetCaptchaBtn">
+                    🔄 Начать заново
                 </button>
             </div>
-            
-            <div class="counter-box">
-                <p>Количество нажатий:</p>
-                <span id="counter">0</span>
-            </div>
         </div>
-        
-        <div class="footer">
-            <p>Сделано с ❤️ для Telegram</p>
+
+        <!-- СТРАНИЦА 3: ОСНОВНОЙ КОНТЕНТ -->
+        <div class="page" id="mainPage">
+            <div class="container">
+                <div class="header">
+                    <div class="icon-big">🎉</div>
+                    <h1>Добро пожаловать!</h1>
+                    <p class="subtitle">Вы успешно прошли верификацию</p>
+                </div>
+                
+                <div class="user-info">
+                    <div class="avatar" id="avatar"></div>
+                    <div class="user-name" id="userName">Загрузка...</div>
+                    <div class="user-status" id="userStatus">✅ Верифицирован</div>
+                </div>
+                
+                <div class="welcome-card">
+                    <p id="welcomeText">
+                        Рады видеть тебя в нашем чате! 🎉
+                    </p>
+                    <button class="btn btn-primary" id="actionBtn">
+                        Нажми меня!
+                    </button>
+                </div>
+                
+                <div class="counter-box">
+                    <p>Количество нажатий:</p>
+                    <span id="counter">0</span>
+                </div>
+                
+                <button class="btn btn-secondary" id="logoutBtn">
+                    🚪 Выйти
+                </button>
+            </div>
         </div>
     </div>
     
