@@ -508,16 +508,6 @@
         const user = tg.initDataUnsafe?.user;
 
         // ===== ПРАВИЛА =====
-        // const rules = [
-        //     { emoji: '🤝', text: 'Будьте вежливы и уважайте друг друга' },
-        //     { emoji: '🚫', text: 'Запрещен спам, реклама и флуд' },
-        //     { emoji: '🔞', text: 'Запрещен контент 18+ и оскорбления' },
-        //     { emoji: '📢', text: 'Обсуждайте только темы, связанные с чатом' },
-        //     { emoji: '🤖', text: 'Не используйте ботов для накрутки' },
-        //     { emoji: '👤', text: 'Один аккаунт — один участник' },
-        //     { emoji: '📸', text: 'Не публикуйте личные данные других' },
-        //     { emoji: '💬', text: 'Используйте @username для упоминаний' },
-        // ];
         const rules = [
                 { emoji: '🤝', text: 'Будьте вежливы и уважайте друг друга' },
                 { emoji: '🚫', text: 'Запрещен спам, ссылки, реклама, флуд, бессвязные выкрики' },
@@ -909,12 +899,6 @@
                 if (counter % 5 === 0) {
                     tg.showAlert(`🎉 Ты нажал ${counter} раз!`);
                 }
-                
-                tg.sendData(JSON.stringify({
-                    action: 'button_click',
-                    count: counter,
-                    user: user?.id
-                }));
             });
         }
 
@@ -934,12 +918,13 @@
                     if (agreeBtn) {
                         agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
                     }
-                    tg.sendData(JSON.stringify({
+                    console.log('📤 Отправка данных о выходе в бота:', { user: user?.id, username: user?.username });
+                    Telegram.WebApp.sendData(JSON.stringify({
                         action: 'user_logged_out',
                         user: user?.id,
                         username: user?.username
                     }));
-                    tg.close();
+                    Telegram.WebApp.close();
                 }
             });
         }
@@ -947,18 +932,6 @@
         // ===== ЗАПУСК =====
         renderRules();
         showPage('rulesPage');
-
-        // // Настройка главной кнопки
-        // if (tg.MainButton) {
-        //     tg.MainButton.setText('📋 Правила');
-        //     tg.MainButton.show();
-            
-        //     tg.MainButton.onClick(() => {
-        //         if (rulesList) {
-        //             rulesList.scrollTop = 0;
-        //         }
-        //     });
-        // }
 
         // Обработка темы
         tg.onEvent('themeChanged', () => {
