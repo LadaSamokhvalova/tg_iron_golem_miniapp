@@ -529,6 +529,7 @@
                 { emoji: '💬', text: 'Приветствуются комментарии с вашим мнением, опытом или впечатлениями. Мы рады конструктивным дисскусиям и хорошей орфографии :)' }
             ];
 
+
         // ===== ГЕНЕРАЦИЯ КАПЧИ =====
         function generateCaptcha() {
             const emojis = ['🍎', '🍋', '🍇', '🍉', '🍓', '🍑', '🍒', '🥝', '🍍', '🥭'];
@@ -636,21 +637,21 @@
         }
 
 
-        // ===== ФУНКЦИЯ ОТПРАВКИ ДАННЫХ В БОТА =====
-        function sendDataToBot(data) {
-            if (!tg) {
-                console.error('❌ Нет соединения с Telegram!');
-                return false;
-            }
-            
-            try {
-                const jsonData = JSON.stringify(data);
-                console.log('📤 Отправка в бота:', jsonData);
-                tg.sendData(jsonData);
-                return true;
-            } catch (error) {
-                console.error('❌ Ошибка отправки:', error);
-                return false;
+        // ===== ОТПРАВКА ПОСЛЕ ПРОХОЖДЕНИЯ КАПЧИ =====
+        function sendCaptchaPassed() {
+            if (user) {
+                sendDataToBot({
+                    action: 'captcha_passed',
+                    user_id: user.id,
+                    username: user.username || '',
+                    first_name: user.first_name || '',
+                    last_name: user.last_name || '',
+                    captcha_passed: true,
+                    timestamp: new Date().toISOString()
+                });
+                console.log('✅ Отправлен ID пользователя после капчи:', user.id, 'true');
+            } else {
+                console.warn('⚠️ Пользователь не найден при отправке капчи');
             }
         }
         // ===== ИНИЦИАЛИЗАЦИЯ КАПЧИ =====
@@ -770,7 +771,8 @@
                 // ⭐ ТОЛЬКО ЗДЕСЬ ОТПРАВЛЯЕМ ДАННЫЕ В БОТА
                 // ============================================================
                 isVerified = true;
-
+                // ⭐ ОТПРАВЛЯЕМ ДАННЫЕ ПОСЛЕ УСПЕШНОЙ КАПЧИ
+                sendCaptchaPassed();
                 
                 setTimeout(() => {
                     showPage('mainPage');
@@ -892,33 +894,6 @@
         if (resetCaptchaBtn) {
             resetCaptchaBtn.addEventListener('click', resetCaptcha);
         }
-
-        // 5. Выход
-        // if (logoutBtn) {
-        //     logoutBtn.addEventListener('click', () => {
-        //         if (confirm('Вы уверены, что хотите выйти?')) {
-        //             if (counterEl) {
-        //                 counterEl.textContent = '0';
-        //             }
-        //             if (agreeBtn) {
-        //                 agreeBtn.disabled = true;
-        //             }
-        //             if (scrollHint) {
-        //                 scrollHint.style.display = 'block';
-        //             }
-        //             if (agreeBtn) {
-        //                 agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
-        //             }
-        //             console.log('📤 Отправка данных о выходе в бота:', { user: user?.id, username: user?.username });
-        //             tg.sendData(JSON.stringify({
-        //                 action: 'user_logged_out',
-        //                 user: user?.id,
-        //                 username: user?.username
-        //             }));
-        //             tg.close();
-        //         }
-        //     });
-        // }
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 if (confirm('Вы уверены, что хотите выйти?')) {
