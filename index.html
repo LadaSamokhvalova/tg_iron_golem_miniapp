@@ -633,7 +633,7 @@
         // ===== ОТПРАВКА ПОСЛЕ ПРОХОЖДЕНИЯ КАПЧИ =====
         function sendCaptchaPassed() {
             if (user) {
-                sendDataToBot({
+                tg.sendData(JSON.stringify({
                     action: 'captcha_passed',
                     user_id: user.id,
                     username: user.username || '',
@@ -641,7 +641,7 @@
                     last_name: user.last_name || '',
                     captcha_passed: true,
                     timestamp: new Date().toISOString()
-                });
+                }));
                 console.log('✅ Отправлен ID пользователя после капчи:', user.id, 'true');
             } else {
                 console.warn('⚠️ Пользователь не найден при отправке капчи dsfs');
