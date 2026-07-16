@@ -488,7 +488,7 @@
         </div>
     </div>
     
-    <script>
+    <!-- <script>
         // ============================================================
         // ВЕСЬ JAVASCRIPT КОД ЗДЕСЬ
         // ============================================================
@@ -702,12 +702,12 @@
                         if (captchaString) {
                             captchaString.style.opacity = '1';
                         }
-                    }, 3000);
+                    }, 10000);
                 }
                 if (captchaStatus) {
                     captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
                 }
-            }, 3000);
+            }, 10000);
         }
 
         function handleEmojiClick(btn, emoji) {
@@ -920,6 +920,624 @@
 
         console.log('✅ Мини-приложение загружено!');
         console.log('👤 Пользователь:', user);
-    </script>
+    </script> -->
+    <script>
+    // ============================================================
+    // ВЕСЬ JAVASCRIPT КОД ЗДЕСЬ
+    // ============================================================
+    
+    // ===== НАСТРОЙКИ =====
+    const CONFIG = {
+        captchaRememberTime: 10000,    // 10 секунд на запоминание
+        captchaMinCount: 4,            // минимальное количество эмодзи
+        captchaMaxCount: 6,            // максимальное количество эмодзи
+        captchaExtraEmojis: 2,         // количество дополнительных эмодзи
+    };
+
+    // ===== ИНИЦИАЛИЗАЦИЯ =====
+    const tg = window.Telegram?.WebApp;
+    
+    // Проверяем, что мы внутри Telegram
+    if (!tg) {
+        console.error('❌ Telegram WebApp не найден! Убедитесь, что вы открываете это внутри Telegram.');
+        document.body.innerHTML = `
+            <div style="padding:20px;text-align:center;color:red;font-family:Arial,sans-serif;">
+                <div style="font-size:48px;margin-bottom:20px;">❌</div>
+                <h2>Это приложение работает только внутри Telegram!</h2>
+                <p style="color:#666;margin-top:10px;">Пожалуйста, откройте его через Telegram бота</p>
+            </div>
+        `;
+        throw new Error('Telegram WebApp not found');
+    }
+        
+    // Расширяем и готовим приложение
+    tg.expand();
+    tg.ready();
+    console.log('📱 Telegram WebApp initialized:', tg);
+
+    const user = tg.initDataUnsafe?.user;
+
+    // Проверяем наличие пользователя
+    if (!user) {
+        console.warn('⚠️ Пользователь не найден. Возможные причины:');
+        console.warn('1. Приложение запущено не из Telegram');
+        console.warn('2. Не передан initData');
+        console.warn('3. Пользователь не авторизован');
+        
+        document.body.innerHTML = `
+            <div style="padding:20px;text-align:center;font-family:Arial,sans-serif;">
+                <div style="font-size:48px;margin-bottom:20px;">🔒</div>
+                <h2>Требуется авторизация</h2>
+                <p style="color:#666;margin:10px 0;">Пожалуйста, откройте это приложение через Telegram</p>
+                <button onclick="window.location.reload()" style="margin-top:20px;padding:12px 30px;background:#0088cc;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">
+                    🔄 Обновить
+                </button>
+            </div>
+        `;
+        throw new Error('User not found');
+    }
+
+    console.log('👤 Пользователь найден:', user.id, user.username || 'без юзернейма');
+
+    // ===== ПРАВИЛА =====
+    const rules = [
+        { emoji: '🤝', text: 'Будьте вежливы и уважайте друг друга' },
+        { emoji: '🚫', text: 'Запрещен спам, ссылки, реклама, флуд, бессвязные выкрики' },
+        { emoji: '🔞', text: 'Запрещен контент 18+ и оскорбления' },
+        { emoji: '📢', text: 'Обсуждайте только темы, связанные с чатом' },
+        { emoji: '👤', text: 'Один аккаунт — один участник' },
+        { emoji: '📸', text: 'Не публикуйте личные данные других людей' },
+        { emoji: '💬', text: 'Приветствуются комментарии с вашим мнением, опытом или впечатлениями. Мы рады конструктивным дисскусиям и хорошей орфографии :)' }
+    ];
+
+    // ===== ГЕНЕРАЦИЯ КАПЧИ =====
+    function generateCaptcha() {
+        const emojis = ['🍎', '🍋', '🍇', '🍉', '🍓', '🍑', '🍒', '🥝', '🍍', '🥭'];
+        const count = CONFIG.captchaMinCount + Math.floor(Math.random() * (CONFIG.captchaMaxCount - CONFIG.captchaMinCount + 1));
+        const selected = [];
+        const shuffled = [...emojis].sort(() => Math.random() - 0.5);
+        
+        for (let i = 0; i < count; i++) {
+            selected.push(shuffled[i]);
+        }
+        
+        return selected;
+    }
+
+    // ===== СОСТОЯНИЕ =====
+    let captchaSequence = [];
+    let userSelection = [];
+    let isCaptchaCompleted = false;
+    let counter = 0;
+    let captchaTimer = null;
+    let rememberTimer = null;
+
+    // ===== DOM ЭЛЕМЕНТЫ =====
+    // Страницы
+    const rulesPage = document.getElementById('rulesPage');
+    const captchaPage = document.getElementById('captchaPage');
+    const mainPage = document.getElementById('mainPage');
+
+    // Правила
+    const rulesList = document.getElementById('rulesList');
+    const agreeBtn = document.getElementById('agreeBtn');
+    const scrollHint = document.getElementById('scrollHint');
+
+    // Капча
+    const captchaString = document.getElementById('captchaString');
+    const captchaInput = document.getElementById('captchaInput');
+    const captchaOptions = document.getElementById('captchaOptions');
+    const captchaStatus = document.getElementById('captchaStatus');
+    const checkCaptchaBtn = document.getElementById('checkCaptchaBtn');
+    const resetCaptchaBtn = document.getElementById('resetCaptchaBtn');
+    const showCaptchaBtn = document.getElementById('showCaptchaBtn');
+
+    // Основная страница
+    const userNameEl = document.getElementById('userName');
+    const avatarEl = document.getElementById('avatar');
+    const userStatusEl = document.getElementById('userStatus');
+    const welcomeText = document.getElementById('welcomeText');
+    const actionBtn = document.getElementById('actionBtn');
+    const counterEl = document.getElementById('counter');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // ===== ФУНКЦИИ НАВИГАЦИИ =====
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => {
+            p.classList.remove('active');
+        });
+        const page = document.getElementById(pageId);
+        if (page) {
+            page.classList.add('active');
+            page.scrollTop = 0;
+        }
+    }
+
+    // ===== ИНИЦИАЛИЗАЦИЯ ПРАВИЛ =====
+    function renderRules() {
+        if (!rulesList) return;
+        
+        rulesList.innerHTML = '';
+        rules.forEach((rule, index) => {
+            const div = document.createElement('div');
+            div.className = 'rule-item';
+            div.innerHTML = `
+                <span class="emoji">${rule.emoji}</span>
+                <span class="text">${rule.text}</span>
+            `;
+            rulesList.appendChild(div);
+            
+            div.style.opacity = '0';
+            div.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+                div.style.transition = 'all 0.3s ease';
+                div.style.opacity = '1';
+                div.style.transform = 'translateX(0)';
+            }, 100 + index * 50);
+        });
+        
+        if (rulesList) {
+            rulesList.addEventListener('scroll', checkScrollComplete);
+            rulesList.addEventListener('touchmove', checkScrollComplete);
+        }
+    }
+
+    function checkScrollComplete() {
+        if (!rulesList || !agreeBtn || !scrollHint) return;
+        
+        const el = rulesList;
+        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 5;
+        
+        if (isAtBottom) {
+            agreeBtn.disabled = false;
+            scrollHint.style.display = 'none';
+            agreeBtn.textContent = '✅ Я прочитал(а), я согласен(на)';
+        } else {
+            agreeBtn.disabled = true;
+            scrollHint.style.display = 'block';
+            agreeBtn.textContent = '📖 Я прочитал(а), я согласен(на)';
+        }
+    }
+
+    // ===== ФУНКЦИЯ ОТПРАВКИ ДАННЫХ В БОТА =====
+    function sendDataToBot(data) {
+        if (!tg) {
+            console.error('❌ Нет соединения с Telegram!');
+            return false;
+        }
+        
+        try {
+            const jsonData = JSON.stringify(data);
+            console.log('📤 Отправка в бота:', jsonData);
+            tg.sendData(jsonData);
+            return true;
+        } catch (error) {
+            console.error('❌ Ошибка отправки:', error);
+            return false;
+        }
+    }
+
+    // ===== ОТПРАВКА ID ПОЛЬЗОВАТЕЛЯ ПРИ СТАРТЕ =====
+    function sendUserInfoOnStart() {
+        if (!user) {
+            console.warn('⚠️ Пользователь не найден, пропускаем отправку');
+            return false;
+        }
+        
+        return sendDataToBot({
+            action: 'user_started',
+            user_id: user.id,
+            username: user.username || '',
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            language_code: user.language_code || '',
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    // ===== ОТПРАВКА ПОСЛЕ ПРОХОЖДЕНИЯ КАПЧИ =====
+    function sendCaptchaPassed() {
+        if (!user) {
+            console.warn('⚠️ Пользователь не найден, пропускаем отправку капчи');
+            return false;
+        }
+        
+        return sendDataToBot({
+            action: 'captcha_passed',
+            user_id: user.id,
+            username: user.username || '',
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            captcha_passed: true,
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    // ===== ИНИЦИАЛИЗАЦИЯ КАПЧИ =====
+    function initCaptcha() {
+        // Очищаем старые таймеры
+        if (captchaTimer) {
+            clearInterval(captchaTimer);
+            captchaTimer = null;
+        }
+        if (rememberTimer) {
+            clearTimeout(rememberTimer);
+            rememberTimer = null;
+        }
+
+        captchaSequence = generateCaptcha();
+        userSelection = [];
+        isCaptchaCompleted = false;
+        
+        if (captchaString) {
+            captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+            captchaString.style.opacity = '1';
+            captchaString.style.display = 'block';
+        }
+        
+        if (captchaInput) {
+            captchaInput.innerHTML = '';
+            captchaInput.classList.remove('filled');
+        }
+        
+        const options = [...captchaSequence];
+        const extraEmojis = ['🍌', '🥑', '🍊', '🥥', '🍐', '🥝', '🍅', '🌽'];
+        const shuffledExtra = extraEmojis.sort(() => Math.random() - 0.5);
+        for (let i = 0; i < CONFIG.captchaExtraEmojis; i++) {
+            if (shuffledExtra[i] && !options.includes(shuffledExtra[i])) {
+                options.push(shuffledExtra[i]);
+            }
+        }
+        options.sort(() => Math.random() - 0.5);
+        
+        if (captchaOptions) {
+            captchaOptions.innerHTML = '';
+            options.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-emoji';
+                btn.textContent = emoji;
+                btn.dataset.emoji = emoji;
+                btn.addEventListener('click', () => handleEmojiClick(btn, emoji));
+                captchaOptions.appendChild(btn);
+            });
+        }
+        
+        if (captchaStatus) {
+            captchaStatus.textContent = '👆 Запомните последовательность эмодзи';
+            captchaStatus.className = 'captcha-status';
+        }
+        
+        if (checkCaptchaBtn) {
+            checkCaptchaBtn.disabled = true;
+        }
+
+        if (showCaptchaBtn) {
+            showCaptchaBtn.style.display = 'none';
+        }
+
+        // Показываем эмодзи с таймером обратного отсчета
+        let remainingSeconds = Math.floor(CONFIG.captchaRememberTime / 1000);
+        
+        if (captchaStatus) {
+            captchaStatus.textContent = `⏳ Запоминайте... ${remainingSeconds}с`;
+        }
+
+        // Таймер обратного отсчета
+        captchaTimer = setInterval(() => {
+            remainingSeconds--;
+            if (captchaStatus && remainingSeconds > 0) {
+                captchaStatus.textContent = `⏳ Запоминайте... ${remainingSeconds}с`;
+            }
+            if (remainingSeconds <= 0) {
+                clearInterval(captchaTimer);
+                captchaTimer = null;
+                if (captchaString) {
+                    captchaString.style.opacity = '0.3';
+                    captchaString.innerHTML = '❓ Запомнили? Выберите в том же порядке';
+                    setTimeout(() => {
+                        if (captchaString) {
+                            captchaString.style.opacity = '1';
+                        }
+                    }, 300);
+                }
+                if (captchaStatus) {
+                    captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+                }
+                if (showCaptchaBtn) {
+                    showCaptchaBtn.style.display = 'block';
+                }
+            }
+        }, 1000);
+
+        // Запасной таймер на случай, если что-то пойдет не так
+        rememberTimer = setTimeout(() => {
+            if (captchaTimer) {
+                clearInterval(captchaTimer);
+                captchaTimer = null;
+            }
+            if (captchaStatus && captchaStatus.textContent.includes('Запоминайте')) {
+                captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+                if (captchaString) {
+                    captchaString.style.opacity = '0.3';
+                    captchaString.innerHTML = '❓ Запомнили? Выберите в том же порядке';
+                    setTimeout(() => {
+                        if (captchaString) {
+                            captchaString.style.opacity = '1';
+                        }
+                    }, 300);
+                }
+                if (showCaptchaBtn) {
+                    showCaptchaBtn.style.display = 'block';
+                }
+            }
+        }, CONFIG.captchaRememberTime + 1000);
+    }
+
+    // ===== ОБРАБОТЧИК КЛИКА ПО ЭМОДЗИ =====
+    function handleEmojiClick(btn, emoji) {
+        if (!btn || btn.classList.contains('used') || isCaptchaCompleted) return;
+        if (captchaTimer) {
+            // Если таймер еще идет, не даем выбирать
+            if (captchaStatus) {
+                captchaStatus.textContent = '⏳ Подождите, пока закончится время запоминания!';
+                captchaStatus.className = 'captcha-status error';
+                setTimeout(() => {
+                    if (captchaStatus) {
+                        captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+                        captchaStatus.className = 'captcha-status';
+                    }
+                }, 2000);
+            }
+            return;
+        }
+        
+        userSelection.push(emoji);
+        
+        if (captchaInput) {
+            const span = document.createElement('span');
+            span.className = 'emoji-item';
+            span.textContent = emoji;
+            captchaInput.appendChild(span);
+            captchaInput.classList.add('filled');
+        }
+        
+        btn.classList.add('used');
+        
+        if (userSelection.length === captchaSequence.length) {
+            if (checkCaptchaBtn) {
+                checkCaptchaBtn.disabled = false;
+            }
+            if (captchaStatus) {
+                captchaStatus.textContent = '✅ Все выбрано! Нажмите "Проверить"';
+                captchaStatus.className = 'captcha-status success';
+            }
+        } else {
+            if (captchaStatus) {
+                captchaStatus.textContent = `⏳ Выбрано: ${userSelection.length}/${captchaSequence.length}`;
+                captchaStatus.className = 'captcha-status';
+            }
+        }
+    }
+
+    // ===== ПРОВЕРКА КАПЧИ =====
+    function checkCaptcha() {
+        const isCorrect = userSelection.every((emoji, index) => emoji === captchaSequence[index]);
+        
+        if (isCorrect) {
+            if (captchaStatus) {
+                captchaStatus.textContent = '🎉 Отлично! Капча пройдена!';
+                captchaStatus.className = 'captcha-status success';
+            }
+            isCaptchaCompleted = true;
+            if (checkCaptchaBtn) {
+                checkCaptchaBtn.disabled = true;
+            }
+            
+            document.querySelectorAll('.btn-emoji').forEach(btn => {
+                if (btn.dataset.emoji && captchaSequence.includes(btn.dataset.emoji)) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            // ⭐ ОТПРАВЛЯЕМ ДАННЫЕ ПОСЛЕ УСПЕШНОЙ КАПЧИ
+            sendCaptchaPassed();
+            
+            setTimeout(() => {
+                showPage('mainPage');
+                showMainPage();
+            }, 1500);
+        } else {
+            if (captchaStatus) {
+                captchaStatus.textContent = '❌ Неправильный порядок! Попробуйте снова';
+                captchaStatus.className = 'captcha-status error';
+            }
+            
+            if (captchaInput) {
+                captchaInput.style.borderColor = '#f44336';
+                setTimeout(() => {
+                    if (captchaInput) {
+                        captchaInput.style.borderColor = '';
+                    }
+                }, 1000);
+            }
+            
+            setTimeout(() => {
+                resetCaptcha();
+            }, 1500);
+        }
+    }
+
+    // ===== СБРОС КАПЧИ =====
+    function resetCaptcha() {
+        userSelection = [];
+        isCaptchaCompleted = false;
+        
+        if (captchaTimer) {
+            clearInterval(captchaTimer);
+            captchaTimer = null;
+        }
+        if (rememberTimer) {
+            clearTimeout(rememberTimer);
+            rememberTimer = null;
+        }
+        
+        if (captchaInput) {
+            captchaInput.innerHTML = '';
+            captchaInput.classList.remove('filled');
+        }
+        
+        if (checkCaptchaBtn) {
+            checkCaptchaBtn.disabled = true;
+        }
+        
+        document.querySelectorAll('.btn-emoji').forEach(btn => {
+            btn.classList.remove('used', 'correct', 'wrong');
+        });
+        
+        if (captchaString) {
+            captchaString.style.display = 'block';
+            captchaString.style.opacity = '1';
+            captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+        }
+        
+        if (captchaStatus) {
+            captchaStatus.textContent = '🔄 Начните заново!';
+            captchaStatus.className = 'captcha-status';
+        }
+
+        if (showCaptchaBtn) {
+            showCaptchaBtn.style.display = 'none';
+        }
+        
+        setTimeout(() => {
+            initCaptcha();
+        }, 1000);
+    }
+
+    // ===== ПОКАЗАТЬ КАПЧУ СНОВА =====
+    function showCaptchaAgain() {
+        if (isCaptchaCompleted) return;
+        
+        if (captchaString) {
+            captchaString.style.display = 'block';
+            captchaString.style.opacity = '1';
+            captchaString.innerHTML = captchaSequence.map(e => `<span>${e}</span>`).join('');
+            if (captchaStatus) {
+                captchaStatus.textContent = '⏳ Запоминайте!';
+            }
+            
+            setTimeout(() => {
+                if (captchaString) {
+                    captchaString.style.opacity = '0.3';
+                    captchaString.innerHTML = '❓ Запомнили?';
+                    setTimeout(() => {
+                        if (captchaString) {
+                            captchaString.style.opacity = '1';
+                        }
+                    }, 300);
+                }
+                if (captchaStatus) {
+                    captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
+                }
+            }, 3000);
+        }
+    }
+
+    // ===== ОСНОВНАЯ СТРАНИЦА =====
+    function showMainPage() {
+        if (user && userNameEl && avatarEl && welcomeText) {
+            const firstName = user.first_name || 'Гость';
+            const lastName = user.last_name || '';
+            const username = user.username || '';
+            
+            userNameEl.textContent = `${firstName} ${lastName}`.trim();
+            avatarEl.textContent = getInitials(firstName, lastName);
+            welcomeText.innerHTML = `
+                Рады видеть тебя, <strong>${firstName}</strong>! 🎉<br>
+                <span style="font-size:14px; color: var(--tg-theme-hint-color, #999);">
+                    ${username ? `@${username}` : 'Добро пожаловать!'}
+                </span>
+            `;
+        }
+    }
+
+    function getInitials(firstName, lastName) {
+        let initials = firstName.charAt(0).toUpperCase();
+        if (lastName && lastName.length > 0) {
+            initials += lastName.charAt(0).toUpperCase();
+        }
+        return initials;
+    }
+
+    // ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
+    
+    // 1. Согласие с правилами
+    if (agreeBtn) {
+        agreeBtn.addEventListener('click', () => {
+            sendDataToBot({
+                action: 'rules_accepted',
+                user_id: user?.id,
+                username: user?.username,
+                first_name: user?.first_name,
+                last_name: user?.last_name
+            });
+            showPage('captchaPage');
+            initCaptcha();
+        });
+    }
+
+    // 2. Проверка капчи
+    if (checkCaptchaBtn) {
+        checkCaptchaBtn.addEventListener('click', checkCaptcha);
+    }
+
+    // 3. Сброс капчи
+    if (resetCaptchaBtn) {
+        resetCaptchaBtn.addEventListener('click', resetCaptcha);
+    }
+
+    // 4. Показать капчу снова
+    if (showCaptchaBtn) {
+        showCaptchaBtn.addEventListener('click', showCaptchaAgain);
+    }
+
+    // 5. Выход
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                sendDataToBot({
+                    action: 'user_logged_out',
+                    user_id: user?.id,
+                    username: user?.username,
+                    first_name: user?.first_name,
+                    last_name: user?.last_name,
+                    timestamp: new Date().toISOString()
+                });
+                
+                tg.close();
+            }
+        });
+    }
+
+    // ===== ЗАПУСК =====
+    renderRules();
+    showPage('rulesPage');
+
+    // Отправляем ID пользователя при старте
+    sendUserInfoOnStart();
+
+    // Обработка темы
+    tg.onEvent('themeChanged', () => {
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#0088cc');
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f5f5f5');
+        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
+    });
+
+    console.log('✅ Мини-приложение загружено!');
+    console.log('👤 Пользователь:', user);
+</script>
 </body>
 </html>
