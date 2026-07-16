@@ -478,15 +478,8 @@
                     <p id="welcomeText">
                         Рады видеть тебя в нашем чате! 🎉
                     </p>
-                    <!-- <button class="btn btn-primary" id="actionBtn">
-                        Нажми меня!
-                    </button> -->
+
                 </div>
-                
-                <!-- <div class="counter-box">
-                    <p>Количество нажатийffff:</p>
-                    <span id="counter">0</span>
-                </div> -->
                 
                 <button class="btn btn-secondary" id="logoutBtn">
                     🚪 Выйти
@@ -709,7 +702,7 @@
                         if (captchaString) {
                             captchaString.style.opacity = '1';
                         }
-                    }, 300);
+                    }, 3000);
                 }
                 if (captchaStatus) {
                     captchaStatus.textContent = '👆 Выберите эмодзи в том же порядке';
@@ -898,12 +891,12 @@
             logoutBtn.addEventListener('click', () => {
                 if (confirm('Вы уверены, что хотите выйти?')) {
                     // Отправляем данные о выходе fdfs
-                    sendDataToBot({
+                    tg.sendData(JSON.stringify({
                         action: 'user_logged_out',
                         user_id: user?.id,
                         username: user?.username,
                         timestamp: new Date().toISOString()
-                    });
+                    }));
                     
                     // Закрываем приложение
                     tg.close();
